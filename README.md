@@ -22,7 +22,7 @@ It allows a HTTP client to access to a HTTP server behind NAT.
 
 both websocket-server and websocket-client can be installed by pip.
 
-## How to use it ?
+## Usage
 
 you have to write a configuration file before you launch it.
 you can find examples in the sample directory.
@@ -96,6 +96,7 @@ for example, if the control port is 127.0.0.1:9701, just type below command.
 
 ## TODO
 
+- error code.
 - access control for the connection from the other *west*.
 - access control from an HTTP client.
 - SSL in WebSocket.
