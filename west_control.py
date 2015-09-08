@@ -11,10 +11,12 @@ class west_control_handle(BaseHTTPRequestHandler):
 
     def do_GET(self):
         #self.common_proc('GET')
-        response = self.server.west.jc.get_state()
+        r = []
+        r.append(self.server.west.jc.get_state())
+        r.append(self.server.west.get_state())
         self.send_response(200)
         self.end_headers()
-        self.wfile.write(response)
+        self.wfile.write(''.join(r))
 
 class west_control(ThreadingMixIn, HTTPServer):
 

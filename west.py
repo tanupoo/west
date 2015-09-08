@@ -20,12 +20,19 @@ class west():
 
     timeout = 0.5
     jc = None
+    # socket holder
+    s_wsts = None
+    s_cport = None
+    # socket list holder
+    s_proxy = []
+    s_wstc = []
 
     def __init__(self, config, debug_level=0):
         self.config_file = config
         if self.config_file:
             try:
-                self.jc = west_config(self.config_file, debug_level=debug_level)
+                self.jc = west_config(self.config_file,
+                                      debug_level=debug_level)
             except Exception as e:
                 print('ERROR:', e)
                 raise
@@ -165,6 +172,26 @@ class west():
         self.s_cport = west_control(self)
         print('INFO: control port has been started on %s %d' %
               (self.jc['west']['addr'], self.jc['west']['port']))
+
+    def get_state(self):
+        r = []
+        print('---wsts object---')
+        #print(dir(self.s_wsts))
+        if hasattr(self.s_wsts, 'clients'):
+            for i in self.s_wsts.clients:
+                print(i['id'], i['origin'], i['address'])
+        if hasattr(self.s_wsts, 'q_request'):
+            print('queued request:', self.s_wsts.q_request)
+        print('---wstc object---')
+        for i in self.s_wstc:
+            print(dir(i))
+        print('---proxy object---')
+        for i in self.s_proxy:
+            #print(dir(i))
+            print(i.pss_name, i.server_address, 'Callback: '
+                  'Registered' if i.s_ws else 'None')
+        #r.append('\n')
+        return ''.join(r)
 
 def parse_args():
     p = argparse.ArgumentParser()

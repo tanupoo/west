@@ -194,12 +194,12 @@ class west_config(dict):
         print(self.get_state())
 
     def get_state(self):
-        r = ''
+        r = []
         for i in [ 'west', 'wsts', 'wstc', 'proxy' ]:
-            r += ('--- %s object ---\n' % i)
-            r += (json.dumps(self[i], sort_keys=True, indent=4,
+            r.append('--- %s object ---\n' % i)
+            r.append(json.dumps(self[i], sort_keys=True, indent=4,
                              separators=(',', ':'), cls=west_json_encoder))
-            r += '\n'
+            r.append('\n')
         return ''.join(r)
 
 '''
