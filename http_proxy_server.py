@@ -35,6 +35,10 @@ class ProxyHandler(ExtendedHTTPRequestHandler):
         self.read_content()
 
     def pre_process(self):
+        '''
+        it called just immediately after the 1st line of a request is ready to
+        be read.
+        '''
         #
         msg = 'an HTTP client connected from %s, request %s %s' % (repr(self.client_address), self.command, self.path)
         self.log_message(msg)
@@ -42,11 +46,14 @@ class ProxyHandler(ExtendedHTTPRequestHandler):
             print('DEBUG:', msg)
             print('DEBUG:', self.__class__, currentThread().getName())
         #
+        # check whether the incoming url can be converted into a outgoing url.
+        # before it read the whole message from the cient.
+        #
         if (not self.server.jc_mine.has_key(self.path) or
                 not self.server.jc_mine[self.path].has_key('ou')):
             self.send_error(404)
             self.end_headers()
-            msg = 'no proxy mapping for %s' % self.path
+            msg = 'no url mapping for %s' % self.path
             self.log_message(msg)
             if is_debug(1, self.server.west):
                 print('ERROR:', msg)
@@ -54,9 +61,24 @@ class ProxyHandler(ExtendedHTTPRequestHandler):
         return True
 
     def post_read(self, contents):
+        '''
+        it called after the whole message from the client has been read.
+        '''
+        #
+        # convert Path into the outgoing URL, and Host into the HTTP server.
+        #
+        a = inet_string(self.server.jc_mine[self.path]['ou'])
+        if self.headers.has_key('host'):
+            if is_debug(2, self.server.west):
+                print('DEBUG: convert Host into %s from %s' %
+                      (self.headers['host'], a['url_host']))
+            self.headers['host'] = a['url_host']
+        if is_debug(2, self.server.west):
+            print('DEBUG: convert Path into %s from %s' %
+                  (self.path, a['url_path']))
+        #
         msg_list = []
-        msg_list.append(' '.join([self.command,
-                                  self.server.jc_mine[self.path]['ou'],
+        msg_list.append(' '.join([self.command, a['url_path'],
                                   self.request_version]))
         msg_list.append('\r\n')
         msg_list.extend(['%s: %s\r\n' % (k,v) for k,v in self.headers.items()])
