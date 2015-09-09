@@ -11,11 +11,6 @@ from websocket_server import WebsocketServer, WebSocketHandler
 from http_proxy_client import http_proxy_http_client_thread
 from west_parser import west_parser
 from debug_tools import is_debug, debug_print
-import re
-
-#re_upgrade = re.compile('\nupgrade[\s]*:[\s]*websocket')
-#re_key = re.compile('\nsec-websocket-key[\s]*:[\s]*(.*)\r\n')
-#re_origin = re.compile('\norigin[\s]*:[\s]*(.*)\r\n')
 
 class ExtendedWebSocketHandler(WebSocketHandler):
 
