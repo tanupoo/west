@@ -108,6 +108,9 @@ class ProxyHandler(ExtendedHTTPRequestHandler):
             self.log_message(msg)
             if is_debug(1, self.server.west):
                 print('DEBUG:', msg)
+            self.send_error(503)
+            self.end_headers()
+            self.log_message('The peer proxy is not available.')
             return
         #
         # waiting for a response from the server
@@ -119,12 +122,15 @@ class ProxyHandler(ExtendedHTTPRequestHandler):
         self.waiting_for_server.wait(self.server_response_timer)
 
     '''
+    "self.waiting_for_server.set()" must be called when this function finishes.
+
     @param response http header and payload, or None
     '''
     def put_response(self, session_id, headers, content):
         if session_id != self.session_id:
             print('ERROR: unexpected session_id %s, should be %s',
                     session_id, self.session_id)
+            self.waiting_for_server.set()
             return
         try:
             #
