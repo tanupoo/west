@@ -134,15 +134,15 @@ class west_server(WebsocketServer):
                 print('DEBUG: ---BEGIN OF FORWARDED WSTC DATA---')
                 print(msg)
                 print('DEBUG: ---END OF FORWARDED WSTC DATA---')
-        ret = west_parser(msg)
-        if not ret:
+        reqmsg = west_parser(msg)
+        if not reqmsg:
             raise ValueError
         #
-        t_origin = ret['wh'].get('TransactionOrigin')
+        t_origin = reqmsg['wh'].get('TransactionOrigin')
         if not t_origin:
             print('ERROR: TransactionOrigin does not exist.')
             raise ValueError
-        t_id = ret['wh'].get('TransactionID')
+        t_id = reqmsg['wh'].get('TransactionID')
         if not t_id:
             print('ERROR: TransactionID does not exist.')
             return ValueError
@@ -152,7 +152,7 @@ class west_server(WebsocketServer):
             #
             # response from the server.
             #
-            proxy.put_response(t_id, ret['hh'], ret['hc'])
+            proxy.put_response(t_id, reqmsg['hh'], reqmsg['hc'])
             self.q_request.pop(t_id)
             return
         #
@@ -162,14 +162,14 @@ class west_server(WebsocketServer):
             print('DEBUG: t_origin, t_id = %s, %s' % (t_origin, t_id))
             if is_debug(2, self.west):
                 print('DEBUG: ---BEGIN OF SENDING TO PROXY CLIENT---')
-                print('DEBUG: wst headers=', ret['wh'])
-                print('DEBUG: http request=', ret['hr'])
-                print('DEBUG: http headers=', ret['hh'])
+                print('DEBUG: wst headers=', reqmsg['wh'])
+                print('DEBUG: http request=', reqmsg['hr'])
+                print('DEBUG: http headers=', reqmsg['hh'])
                 print('DEBUG: http content=')
-                print(ret['hc'])
+                print(reqmsg['hc'])
                 print('DEBUG: ---END OF SENDING TO PROXY CLIENT---')
         #
-        http_proxy_http_client_thread(client, server, ret,
+        http_proxy_http_client_thread(client, server, reqmsg,
                                       debug_level=self.west.jc['debug_level'])
 
     def send(self, proxy, payload, session_id, proxy_protocol=''):
