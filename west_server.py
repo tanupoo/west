@@ -197,8 +197,19 @@ class west_server(WebsocketServer):
                 print('DEBUG: ---END OF FORWARDING WST DATA---')
         self.q_request[session_id] = proxy
 
-    def reply(self, client, msg):
-        self.send_message(client, msg)
+    def reply(self, client, reqmsg, resmsg):
+        msg_list = []
+        msg_list.extend(['%s: %s\r\n' % (k,v) for k,v in reqmsg['wh'].items()])
+        msg_list.append('\r\n')
+        msg_list.append(resmsg)
+        msg = ''.join(msg_list)
+        if is_debug(1, self.west):
+            print('DEBUG: response message(len=%d)' % len(msg))
+            if is_debug(2, self.west):
+                print('DEBUG: ---BEGIN OF RESPONDING WEST DATA---')
+                print(msg)
+                print('DEBUG: ---END OF RESPONDING WEST DATA---')
+        self.so.send(msg)
 
 '''
 test code
