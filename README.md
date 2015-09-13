@@ -19,6 +19,7 @@ It allows a HTTP client to access to a HTTP server behind NAT.
 - Python 2.7
 - [wesocket-server][https://pypi.python.org/pypi/websocket-server/0.4]
 - [websocket-client][https://pypi.python.org/pypi/websocket-client]
+- [chunkable_http_server.py][https://github.com/tanupoo/chunkable_http_server.py]
 
 both websocket-server and websocket-client can be installed by pip.
 
