@@ -4,15 +4,16 @@ west: Any proxy with WebSocket tunnel
 ## What is it ?
 
 *west* is a reverse proxy written by Python.
-*west* accepts an HTTP request,
+*west* accepts a request from a client,
 and transports the request to the other specified *west*.
-The specified *west* received the request acts as an HTTP proxy as well,
-and returns the response from the HTTP server to the source *west*.
-the source *west* return the response to the client.
+The specified *west* received the request acts as a proxy as well,
+and returns the response from the server to the source *west*.
+The source *west* returns the response to the client.
+*west* currently only support HTTP proxy.
 
-The point is that *west* utilizes WebSocket tunnel to transport HTTP requests
+The point is that *west* utilizes WebSocket tunnel to transport the requests
 between *west*s.
-It allows a HTTP client to access to a HTTP server behind NAT.
+That is it allows a HTTP client to access to a HTTP server behind NAT.
 
 ## Requirements
 
