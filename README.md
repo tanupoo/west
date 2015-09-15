@@ -3,16 +3,17 @@ west: Any proxy with WebSocket tunnel
 
 ## What is it ?
 
-*west* is a reverse proxy written by Python.
-*west* accepts a request from a client,
-and transports the request to the other specified *west*.
-The specified *west* received the request acts as a proxy as well,
-and returns the response from the server to the source *west*.
-The source *west* returns the response to the client.
-*west* currently only support HTTP proxy.
+west is a reverse proxy written by Python.
+west accepts a request from a client,
+and transports the request to the other specified west.
+The specified west receiving the request acts as a proxy as well,
+and send the request to the server,
+returns the response to the source west.
+The source west returns the response to the client.
+west currently only support HTTP proxy.
 
-The point is that *west* utilizes WebSocket tunnel to transport the requests
-between *west*s.
+The point is that west utilizes WebSocket tunnel to transport the requests
+between wests.
 That is it allows a HTTP client to access to a HTTP server behind NAT.
 
 ## Requirements
@@ -23,7 +24,7 @@ That is it allows a HTTP client to access to a HTTP server behind NAT.
 - [chunkable_http_server.py][https://github.com/tanupoo/chunkable_http_server.py]
 
 both websocket-server and websocket-client can be installed by pip.
-chunkable_http_server.py must be placed into the same directory you deployed the source codes of *west*..
+chunkable_http_server.py must be placed into the same directory you deployed the source codes of west.
 
 ## Usage
 
@@ -31,7 +32,7 @@ you have to write a configuration file before you launch it.
 you can find examples in the sample directory.
 the file name corresponds to the use case number below this document.
 
-typically *west* can be stared like below.
+typically west can be stared like below.
 
     ~~~~
     % west.py -c config.json
@@ -99,13 +100,11 @@ for example, if the control port is 127.0.0.1:9701, just type below command.
 
 ## TODO
 
-- error code.
+- reviewing error codes.
 - access control for the connection from the other *west*.
 - access control from an HTTP client.
 - SSL in WebSocket.
-- IEEE1888 support between IEEE1888 component and *west*.
-- chunk support of http_proxy_client.py
-- gzip support of http_proxy_client.py
+- IEEE1888 support between IEEE1888 component and west.
 
 ## architecture
 
