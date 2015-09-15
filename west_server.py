@@ -119,6 +119,8 @@ class west_server(WebsocketServer):
 
     # Called for every client disconnecting
     def client_left(self, client, server):
+        if not client:
+            return
         print('INFO: west client disconnected %s origin=%s id=%d' %
               (repr(client['address']), client['origin'], client['id']))
         server.west.remove_proxy_server_callback(self.west, client['origin'])
