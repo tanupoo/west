@@ -3,7 +3,7 @@ west: Any proxy with WebSocket tunnel
 
 ## What is it ?
 
-*west* is an HTTP proxy written by Python.
+*west* is a reverse proxy written by Python.
 *west* accepts an HTTP request,
 and transports the request to the other specified *west*.
 The specified *west* received the request acts as an HTTP proxy as well,
@@ -22,6 +22,7 @@ It allows a HTTP client to access to a HTTP server behind NAT.
 - [chunkable_http_server.py][https://github.com/tanupoo/chunkable_http_server.py]
 
 both websocket-server and websocket-client can be installed by pip.
+chunkable_http_server.py must be placed into the same directory you deployed the source codes of *west*..
 
 ## Usage
 
