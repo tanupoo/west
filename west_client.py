@@ -37,24 +37,6 @@ class west_client():
     def fileno(self):
         return self.so.fileno()
 
-    def send(self, proxy, payload, session_id, proxy_protocol=''):
-        msg_list = []
-        msg_list.append('TransactionOrigin: %s\r\n' % self.jc_mine['nm'])
-        msg_list.append('TransactionID: %s\r\n' % session_id)
-        if proxy_protocol:
-            msg_list.append('X-Proxy-Protocol: %s\r\n' % proxy_protocol)
-        msg_list.append('\r\n')
-        msg_list.append(payload)
-        msg = ''.join(msg_list)
-        self.so.send(msg)
-        if is_debug(1, self.west):
-            print('DEBUG: sent wst message length=%d' % len(msg))
-            if is_debug(2, self.west):
-                print('DEBUG: ---BEGIN OF FORWARDING WST DATA---')
-                print(msg)
-                print('DEBUG: ---END OF FORWARDING WST DATA---')
-        self.q_request[session_id] = proxy
-
     def _handle_request_noblock(self):
         try:
             msg =  self.so.recv()
@@ -64,9 +46,9 @@ class west_client():
         if is_debug(1, self.west):
             print('DEBUG: received wst message length=%d' % len(msg))
             if is_debug(2, self.west):
-                print('DEBUG: ---BEGIN OF FORWARDED WSTS DATA---')
+                print('DEBUG: ---BEGIN: west client received---')
                 print(msg)
-                print('DEBUG: ---END OF FORWARDED WSTS DATA---')
+                print('DEBUG: ---END---')
         reqmsg = west_parser(msg)
         if not reqmsg:
             raise ValueError
@@ -83,27 +65,51 @@ class west_client():
         proxy = self.q_request.get(t_id)
         if proxy:
             #
-            # response from the server.
+            # response from the west server.
             #
-            proxy.put_response(t_id, reqmsg['hh'], reqmsg['hc'])
+            proxy.reply(t_id, reqmsg['hr'], reqmsg['hh'], reqmsg['hc'])
             self.q_request.pop(t_id)
             return
         #
-        # new request from the client.
+        # new request from the west client.
         #
         if is_debug(1, self.west):
-            print('DEBUG: t_origin, t_id = %s, %s' % (t_origin, t_id))
-            if is_debug(2, self.west):
-                print('DEBUG: ---BEGIN OF SENDING TO PROXY CLIENT---')
-                print('DEBUG: wst headers=', reqmsg['wh'])
-                print('DEBUG: http request=', reqmsg['hr'])
-                print('DEBUG: http headers=', reqmsg['hh'])
-                print('DEBUG: http content=')
-                print(reqmsg['hc'])
-                print('DEBUG: ---END OF SENDING TO PROXY CLIENT---')
+            print('DEBUG: new west request: %s, %s' % (t_origin, t_id))
         #
         http_proxy_http_client_thread(None, self, reqmsg,
                                     debug_level=self.west.jc['debug_level'])
 
-    def reply(self, client, msg):
+    def send(self, proxy, payload, session_id, proxy_protocol=''):
+        msg_list = []
+        msg_list.append('TransactionOrigin: %s\r\n' % self.jc_mine['nm'])
+        msg_list.append('TransactionID: %s\r\n' % session_id)
+        if proxy_protocol:
+            msg_list.append('X-Proxy-Protocol: %s\r\n' % proxy_protocol)
+        msg_list.append('\r\n')
+        msg_list.append(payload)
+        msg = ''.join(msg_list)
+        #
+        if is_debug(1, self.west):
+            print('DEBUG: sending west message length=%d' % len(msg))
+            if is_debug(2, self.west):
+                print('DEBUG: ---BEGIN: west client sending---')
+                print(msg)
+                print('DEBUG: ---END---')
         self.so.send(msg)
+        self.q_request[session_id] = proxy
+
+    def reply(self, client, reqmsg, resmsg):
+        msg_list = []
+        msg_list.extend(['%s: %s\r\n' %
+                         (k,v) for k,v in reqmsg['wh'].iteritems()])
+        msg_list.append('\r\n')
+        msg_list.append(resmsg)
+        msg = ''.join(msg_list)
+        if is_debug(1, self.west):
+            print('DEBUG: response message(len=%d)' % len(msg))
+            if is_debug(2, self.west):
+                print('DEBUG: ---BEGIN: west client replying---')
+                print(msg)
+                print('DEBUG: ---END---')
+        self.so.send(msg)
+

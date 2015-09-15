@@ -4,8 +4,6 @@
 from __future__ import print_function
 
 import sys
-import argparse
-import select
 from SocketServer import TCPServer
 from websocket_server import WebsocketServer, WebSocketHandler
 from http_proxy_client import http_proxy_http_client_thread
@@ -23,9 +21,9 @@ class ExtendedWebSocketHandler(WebSocketHandler):
         try:
             message = self.request.recv(1024).decode().strip()
             if is_debug(2, self.server.west):
-                print('DEBUG: ---BEGIN OF WEST MESSAGE---')
+                print('DEBUG: ---BEGIN: west server received handshake---')
                 print(message)
-                print('DEBUG: ---END OF WEST MESSAGE---')
+                print('DEBUG: ---END---')
             headers = self.parse_request(message)
             upgrade = headers.get('upgrade')
             if upgrade != 'websocket':
@@ -115,13 +113,13 @@ class west_server(WebsocketServer):
         #          client['origin'])
         #    raise ValueError
         #
-        print('INFO: WST client connected from %s origin=%s id=%d' %
+        print('INFO: west client connected from %s origin=%s id=%d' %
               (repr(client['address']), client['origin'], client['id']))
         server.west.update_proxy_server_callback(self, client['origin'])
 
     # Called for every client disconnecting
     def client_left(self, client, server):
-        print('INFO: WST client disconnected %s origin=%s id=%d' %
+        print('INFO: west client disconnected %s origin=%s id=%d' %
               (repr(client['address']), client['origin'], client['id']))
         server.west.remove_proxy_server_callback(self.west, client['origin'])
 
@@ -131,9 +129,9 @@ class west_server(WebsocketServer):
             print('DEBUG: received data len=%d from %s id=%d' % (
                     len(msg), repr(client), client['id']))
             if is_debug(2, self.west):
-                print('DEBUG: ---BEGIN OF FORWARDED WSTC DATA---')
+                print('DEBUG: ---BEGIN: west server received---')
                 print(msg)
-                print('DEBUG: ---END OF FORWARDED WSTC DATA---')
+                print('DEBUG: ---END---')
         reqmsg = west_parser(msg)
         if not reqmsg:
             raise ValueError
@@ -150,24 +148,16 @@ class west_server(WebsocketServer):
         proxy = self.q_request.get(t_id)
         if proxy:
             #
-            # response from the server.
+            # response from the west client.
             #
-            proxy.put_response(t_id, reqmsg['hh'], reqmsg['hc'])
+            proxy.reply(t_id, reqmsg['hr'], reqmsg['hh'], reqmsg['hc'])
             self.q_request.pop(t_id)
             return
         #
-        # new request from the client.
+        # new request from the west client.
         #
         if is_debug(1, self.west):
-            print('DEBUG: t_origin, t_id = %s, %s' % (t_origin, t_id))
-            if is_debug(2, self.west):
-                print('DEBUG: ---BEGIN OF SENDING TO PROXY CLIENT---')
-                print('DEBUG: wst headers=', reqmsg['wh'])
-                print('DEBUG: http request=', reqmsg['hr'])
-                print('DEBUG: http headers=', reqmsg['hh'])
-                print('DEBUG: http content=')
-                print(reqmsg['hc'])
-                print('DEBUG: ---END OF SENDING TO PROXY CLIENT---')
+            print('DEBUG: new west request: %s, %s' % (t_origin, t_id))
         #
         http_proxy_http_client_thread(client, server, reqmsg,
                                       debug_level=self.west.jc['debug_level'])
@@ -188,28 +178,30 @@ class west_server(WebsocketServer):
         msg_list.append('\r\n')
         msg_list.append(payload)
         msg = ''.join(msg_list)
-        self.send_message(client, msg)
+        #
         if is_debug(1, self.west):
-            print('DEBUG: sent wst message length=%d' % len(msg))
+            print('DEBUG: sending west message length=%d' % len(msg))
             if is_debug(2, self.west):
-                print('DEBUG: ---BEGIN OF FORWARDING WST DATA---')
+                print('DEBUG: ---BEGIN: west server sending---')
                 print(msg)
-                print('DEBUG: ---END OF FORWARDING WST DATA---')
+                print('DEBUG: ---END---')
+        self.send_message(client, msg)
         self.q_request[session_id] = proxy
 
     def reply(self, client, reqmsg, resmsg):
         msg_list = []
-        msg_list.extend(['%s: %s\r\n' % (k,v) for k,v in reqmsg['wh'].items()])
+        msg_list.extend(['%s: %s\r\n' %
+                         (k,v) for k,v in reqmsg['wh'].iteritems()])
         msg_list.append('\r\n')
         msg_list.append(resmsg)
         msg = ''.join(msg_list)
         if is_debug(1, self.west):
             print('DEBUG: response message(len=%d)' % len(msg))
             if is_debug(2, self.west):
-                print('DEBUG: ---BEGIN OF RESPONDING WEST DATA---')
+                print('DEBUG: ---BEGIN: west server replying---')
                 print(msg)
-                print('DEBUG: ---END OF RESPONDING WEST DATA---')
-        self.so.send(msg)
+                print('DEBUG: ---END---')
+        self.send_message(client, msg)
 
 '''
 test code

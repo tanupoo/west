@@ -8,10 +8,8 @@ import traceback    # for debug
 import uuid
 from SocketServer import ThreadingMixIn
 from BaseHTTPServer import HTTPServer
-from extended_http_server import ExtendedHTTPRequestHandler
+from chunkable_http_server import ChunkableHTTPRequestHandler
 from inet_string import inet_string
-from west_client import west_client
-from west_parser import west_parser
 from threading import currentThread, Event
 import time
 from debug_tools import is_debug, debug_print
@@ -19,7 +17,7 @@ from debug_tools import is_debug, debug_print
 '''
 HTTP Proxy Handler
 '''
-class ProxyHandler(ExtendedHTTPRequestHandler):
+class ProxyHandler(ChunkableHTTPRequestHandler):
 
     server_response_timer = 5
     waiting_for_server = None
@@ -40,23 +38,28 @@ class ProxyHandler(ExtendedHTTPRequestHandler):
         be read.
         '''
         #
-        msg = 'an HTTP client connected from %s, request %s %s' % (repr(self.client_address), self.command, self.path)
-        self.log_message(msg)
         if is_debug(1, self.server.west):
-            print('DEBUG:', msg)
             print('DEBUG:', self.__class__, currentThread().getName())
+        print('INFO: an http client connected from %s, request %s %s' %
+              (repr(self.client_address), self.command, self.path))
+        #
+        # check whether there is a socket for the peer.
+        # it it checked again later.
+        #
+        if not self.server.s_ws:
+            print('ERROR: The peer proxy is not available.')
+            self.send_error(503)
+            self.end_headers()
+            return False
         #
         # check whether the incoming url can be converted into a outgoing url.
         # before it read the whole message from the cient.
         #
         if (not self.server.jc_mine.has_key(self.path) or
                 not self.server.jc_mine[self.path].has_key('ou')):
+            print('ERROR: no url mapping for %s' % self.path)
             self.send_error(404)
             self.end_headers()
-            msg = 'no url mapping for %s' % self.path
-            self.log_message(msg)
-            if is_debug(1, self.server.west):
-                print('ERROR:', msg)
             return False
         return True
 
@@ -68,6 +71,7 @@ class ProxyHandler(ExtendedHTTPRequestHandler):
         # convert Path into the outgoing URL, and Host into the HTTP server.
         #
         a = inet_string(self.server.jc_mine[self.path]['ou'])
+        self.headers = dict(self.headers)
         if self.headers.has_key('host'):
             if is_debug(2, self.server.west):
                 print('DEBUG: convert Host into %s from %s' %
@@ -81,17 +85,18 @@ class ProxyHandler(ExtendedHTTPRequestHandler):
         msg_list.append(' '.join([self.command, a['url_path'],
                                   self.request_version]))
         msg_list.append('\r\n')
-        msg_list.extend(['%s: %s\r\n' % (k,v) for k,v in self.headers.items()])
+        msg_list.extend(['%s: %s\r\n' %
+                         (k,v) for k,v in self.headers.iteritems()])
         msg_list.append('\r\n')
         msg_list.extend(contents)
         #
         msg = ''.join(msg_list)
         if is_debug(1, self.server.west):
-            print('DEBUG: sent proxy message length=', len(msg))
+            print('DEBUG: sending proxy message length=', len(msg))
             if is_debug(2, self.server.west):
-                print('DEBUG: ---BEGIN OF PROXY REQUEST---')
+                print('DEBUG: ---BEGIN: proxy server sending---')
                 print(msg)
-                print('DEBUG: ---END OF PROXY REQUEST---')
+                print('DEBUG: ---END---')
         #
         '''
         http sessions must be identified.
@@ -100,33 +105,33 @@ class ProxyHandler(ExtendedHTTPRequestHandler):
         '''
         self.session_id = str(uuid.uuid4())
         #
+        # double check again whether there is a socket for the peer.
+        #
         if self.server.s_ws:
             response = self.server.s_ws.send(self, msg, self.session_id,
                                             proxy_protocol='http')
         else:
-            msg = 'ERROR: any WS instance is not specified.'
-            self.log_message(msg)
-            if is_debug(1, self.server.west):
-                print('DEBUG:', msg)
+            print('ERROR: The peer proxy is not available.')
             self.send_error(503)
             self.end_headers()
-            self.log_message('The peer proxy is not available.')
             return
         #
         # waiting for a response from the server
         #
         if is_debug(1, self.server.west):
-            print('DEBUG: waiting for response from server in %d seconds' %
+            print('DEBUG: waiting for response from http server in %d seconds' %
                   self.server_response_timer)
         self.waiting_for_server = Event()
         self.waiting_for_server.wait(self.server_response_timer)
+        if not self.waiting_for_server.is_set():
+            print('INFO: timeout for waiting a response from http server')
 
     '''
     "self.waiting_for_server.set()" must be called when this function finishes.
 
     @param response http header and payload, or None
     '''
-    def put_response(self, session_id, headers, content):
+    def reply(self, session_id, firstline, headers, content):
         if session_id != self.session_id:
             print('ERROR: unexpected session_id %s, should be %s',
                     session_id, self.session_id)
@@ -136,28 +141,29 @@ class ProxyHandler(ExtendedHTTPRequestHandler):
             #
             # failed
             #
-            if not content:
-                self.send_error(404)
+            if firstline[1] != '200':
+                print('ERROR: http error code %s' % firstline[1])
+                self.send_error(int(firstline[1]))
                 self.end_headers()
-                self.log_message('error in response')
                 self.waiting_for_server.set()
                 return
             #
             # success
             #
+            if is_debug(1, self.server.west):
+                print('DEBUG: sending back message length=%d' % len(content))
+                if is_debug(2, self.server.west):
+                    print('DEBUG: ---BEGIN: proxy server replying---')
+                    print(''.join(['%s: %s\n' %
+                                   (k, v) for k, v in headers.iteritems()]))
+                    print(content)
+                    print('DEBUG: ---END---')
             self.send_response(200)
-            for k,v in headers.items():
+            for k, v in headers.iteritems():
                 self.send_header(k, v)
             self.end_headers()
             self.wfile.write(content)
             self.wfile.write('\r\n')    # just make it sure
-            if is_debug(1, self.server.west):
-                print('DEBUG: sent back message length=%d' % len(content))
-                if is_debug(2, self.server.west):
-                    print('DEBUG: ---BEGIN OF PROXY RESPONSE---')
-                    print(content)
-                    print('DEBUG: ---END OF PROXY RESPONSE---')
-            self.log_message('success')
         except Exception:
             print(traceback.format_exc())
         self.waiting_for_server.set()
@@ -168,7 +174,7 @@ FIAP Proxy Server
 class http_proxy_server(ThreadingMixIn, HTTPServer):
 
     #
-    # poniter to the WS socket.
+    # pointer to the WS socket.
     # for a west client, it should be set in the initial.
     # for a west server, it should be set when a west client connects to the
     # server.

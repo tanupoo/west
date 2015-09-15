@@ -16,6 +16,12 @@ it return a hash list
 if there is no matched part, it set '' (null).
 '''
 
+re_url = re.compile('^(\w+)://([^/]+)(|/.*)$')
+re_brackets = re.compile('^\[([^]]+)\](|:([a-zA-Z0-9]+))$')
+re_anyaddr = re.compile('^:(\d+)')
+re_ipv6_addr = re.compile('^([a-fA-F0-9:]+)$')
+re_non_brackets = re.compile('^([a-zA-Z0-9\-\.]+)(|:([a-zA-Z0-9]+))$')
+
 def inet_string(s, lookup=False):
     ret = {
         'url_scheme' : '',
@@ -24,11 +30,9 @@ def inet_string(s, lookup=False):
               'host' : '',
               'port' : ''
     }
-    re_url = re.compile('^(\w+)://([^/]+)(|/.*)$')
-    re_brackets = re.compile('^\[([^]]+)\](|:([a-zA-Z0-9]+))$')
-    re_anyaddr = re.compile('^:(\d+)')
-    re_ipv6_addr = re.compile('^([a-fA-F0-9:]+)$')
-    re_non_brackets = re.compile('^([a-zA-Z0-9\-\.]+)(|:([a-zA-Z0-9]+))$')
+    if s[0] == '/':
+        ret['url_path'] = s
+        return ret
     # cut the host part
     r = re_url.match(s)
     if r:

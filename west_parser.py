@@ -3,7 +3,11 @@
 
 from __future__ import print_function
 
+import re
+
 valid_keys = ['TransactionOrigin', 'TransactionID', 'X-Proxy-Protocol' ]
+
+re_http_response = re.compile('HTTP/\d+\.\d+')
 
 '''
 @return { 'wh' : {}, 'hr' : [], 'hh' : {}, 'hc' : '' }
@@ -23,7 +27,7 @@ def west_parser(message):
 
     if not message:
         return None
-    # parse the ws tunnel header
+    # parse the west header
     wst_header, sep, http_message = message.partition('\r\n\r\n')
     if sep != '\r\n\r\n':
         print('ERROR: there is no double CR+LF for the end of wst header.')
@@ -36,21 +40,36 @@ def west_parser(message):
             print('WARNING: unknown key %s has been found.' % key)
         wst_msg['wh'].update({ key : val })
     # parse the http header
-    http_header, sep, wst_msg['hc'] = http_message.partition('\r\n\r\n')
+    http_headers, sep, wst_msg['hc'] = http_message.partition('\r\n\r\n')
     if sep != '\r\n\r\n':
         print('ERROR: there is no double CR+LF for the end of http header.')
         return None
-    http_request, sep, rest = http_header.partition('\r\n')
-    wst_msg['hr'] = http_request.split(' ', 3)
-    if len(wst_msg['hr']) < 2:
-        print('ERROR: less parameters in the request line len=.',
-              len(wst_msg['hr']))
-    if sep != '\r\n':
-        print('ERROR: there is no CR+LF for the end of http request line.')
-        return None
+    http_1stline, sep, http_headers = http_headers.partition('\r\n')
+    #
+    # don't check whether sep is equal to '\r\n' because there is a case
+    # when the peer doesn't send other http headers nor any content.
+    #
+    #if sep != '\r\n':
+    #    print('ERROR: there is no CR+LF for the end of http first line.')
+    #    return None
+    wst_msg['hr'] = http_1stline.split(' ', 2)
+    ret = re_http_response.match(wst_msg['hr'][0])
+    if ret:
+        # http response
+        errcode = int(wst_msg['hr'][1])
+    else:
+        ret = re_http_response.match(wst_msg['hr'][2])
+        if ret:
+            # http request
+            pass
+        else:
+            print('ERROR: invalid HTTP first line [%s]' % wst_msg['hr'])
+            return None
     # XXX need more check about the commands
-    for m in rest.split('\r\n'):
-        key, val = m.split(':', 1)
+    for h in http_headers.split('\r\n'):
+        if not h:
+            continue
+        key, val = h.split(':', 1)
         key = key.strip()
         val = val.strip()
         wst_msg['hh'].update({ key : val })
