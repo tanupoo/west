@@ -19,11 +19,11 @@ That is it allows a HTTP client to access to a HTTP server behind NAT.
 ## Requirements
 
 - Python 2.7
-- [wesocket-server][https://pypi.python.org/pypi/websocket-server/0.4]
+- [wesocket-server][https://pypi.python.org/pypi/websocket-server]
 - [websocket-client][https://pypi.python.org/pypi/websocket-client]
 - [chunkable_http_server.py][https://github.com/tanupoo/chunkable_http_server.py]
 
-both websocket-server and websocket-client can be installed by pip.
+both websocket-server and websocket-client can be installed by pip or easy_install.
 chunkable_http_server.py must be placed into the same directory you deployed the source codes of west.
 
 ## Usage
