@@ -28,6 +28,8 @@ class ExtendedWebSocketHandler(WebSocketHandler):
             upgrade = headers.get('upgrade')
             if upgrade != 'websocket':
                 self.keep_alive = False
+                print('INFO: not for the west connection from',
+                      self.client_address)
                 return
             key = headers.get('sec-websocket-key')
             if not key:
