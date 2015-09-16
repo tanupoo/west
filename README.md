@@ -355,4 +355,48 @@ through the west server at the top.
                client                                           server
     ~~~~
 
+### case 4
+
+the client at the top in G accesses to the server at the bottom in L2 throught L.
+the point is that the west in L acts as a west server and client.
+the west in L connects to the west in G.
+the west in L2 connects to the west in L.
+the order of establishing the websocket connections doesn't matter.
+
+    ~~~~
+                           client
+                              |                 |
+                              |                 v
+                              |      http://127.0.0.1:9981/baz
+                  ............|............
+                  .     proxy_server       
+                  .           |      http://127.0.0.1:9982/ba
+                  G           |                 |
+                  .           |                 v
+    ws://127.0.0.1:9801  west_server
+                  ............|............
+                              |                 |
+                              |                 v
+                              |      http://127.0.0.1:9982/ba
+                  ............|..............................
+                  .      west_client
+                  .                       proxy_server       
+                  .                             |    http://127.0.0.1:9983/a
+                  L                             |                 |
+                  .                             |                 v
+    ws://127.0.0.1:9801                    west_server
+                  ..............................|............
+                                                |
+                  ..............................|............
+                  .                           west_client
+                  .                             |
+                  L2                            |
+                  .                             |
+                  .                          proxy_client
+                  ..............................|............     |
+                                                |                 |
+                                                |                 v
+                                                |    http://127.0.0.1:9603/a
+                                              server
+    ~~~~
 
