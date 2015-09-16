@@ -132,12 +132,13 @@ class west():
                 wsname = obj[i]['ea']
             print('INFO: waiting for connection from %s', wsname)
 
-    def update_proxy_server_callback(self, pss, end_name):
+    def update_proxy_server_callback(self, pss, client):
+        client_name = client['origin']
         if is_debug(2, self):
             print('DEBUG: updating proxy callback for west client %s' %
-                  end_name)
+                  client_name)
         for i in self.s_proxy:
-            if i.jc_mine.has_key('en') and i.jc_mine['en'] == end_name:
+            if i.jc_mine.has_key('en') and i.jc_mine['en'] == client_name:
                 if i.s_ws:
                     #
                     # simply update the callback because a west client might not
@@ -145,21 +146,25 @@ class west():
                     #
                     print('WARNING: proxy %s has a callback' % i.pss_name)
                 i.s_ws = pss
+                self.jc['wstc'][client_name]['so'] = client['address']
                 if is_debug(2, self):
                     print('DEBUG: update callback of proxy %s' % i.pss_name)
         return True
 
-    def remove_proxy_server_callback(self, pss, end_name):
+    def remove_proxy_server_callback(self, pss, client):
+        client_name = client['origin']
         if is_debug(2, self):
             print('DEBUG: removing proxy callback for west client %s' %
-                  end_name)
+                  client_name)
         for i in self.s_proxy:
-            if i.jc_mine.has_key('en') and i.jc_mine['en'] == end_name:
+            if i.jc_mine.has_key('en') and i.jc_mine['en'] == client_name:
                 if not i.s_ws:
                     print('ERROR: proxy %s has not a callback' %
                           i.pss_name)
                     return False
                 i.s_ws = None
+                if self.jc['wstc'][client_name].has_key('so'):
+                    self.jc['wstc'][client_name]['so'] = 'unconnected'
                 if is_debug(2, self):
                     print('DEBUG: remove callback of proxy %s' % i.pss_name)
         return True

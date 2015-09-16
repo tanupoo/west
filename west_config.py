@@ -162,6 +162,8 @@ class west_config(dict):
                 print('ERROR: either "ea" or "en" is required at least.')
                 raise ValueError
             #
+            # update the wstc object
+            #
             if c[i].has_key('ea'):
                 j = c[i]['ea']
                 if j not in self['wstc']:
@@ -170,6 +172,7 @@ class west_config(dict):
                 j = c[i]['en']
                 if j not in self['wstc']:
                     self['wstc'][j] = { 'ee' : 'no', 'nm' : self.west_name }
+                    self['wstc'][j]['so'] = 'unconnected'
             #
             # configuration for the url mapping.
             #

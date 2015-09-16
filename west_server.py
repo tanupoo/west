@@ -117,7 +117,7 @@ class west_server(WebsocketServer):
         #
         print('INFO: west client connected from %s origin=%s id=%d' %
               (repr(client['address']), client['origin'], client['id']))
-        server.west.update_proxy_server_callback(self, client['origin'])
+        server.west.update_proxy_server_callback(self, client)
 
     # Called for every client disconnecting
     def client_left(self, client, server):
@@ -125,7 +125,7 @@ class west_server(WebsocketServer):
             return
         print('INFO: west client disconnected %s origin=%s id=%d' %
               (repr(client['address']), client['origin'], client['id']))
-        server.west.remove_proxy_server_callback(self.west, client['origin'])
+        server.west.remove_proxy_server_callback(self.west, client)
 
     # Called when a client sends a message
     def message_received(self, client, server, msg):
