@@ -30,7 +30,7 @@ class http_proxy_http_client():
         elif a['url_host']:
             self.host = a['url_host']
         else:
-            print('ERROR: Host header or URL host part are not defined.')
+            print('ERROR: Host field or URL host part are not defined.')
             return
         if self.debug_level:
             print('DEBUG: connecting to %s' % self.host)
@@ -70,6 +70,8 @@ def http_proxy_http_client_func(wst_req, wst_res, reqmsg, debug_level):
         print('DEBUG:', threading.currentThread().getName())
     if reqmsg['hh'].has_key('host'):
         host = reqmsg['hh']['host']
+    else:
+        raise ValueError('Host field does not exist.')
     c = http_proxy_http_client(reqmsg['hr'][1], host_in_header=host,
                                debug_level=debug_level)
     try:
