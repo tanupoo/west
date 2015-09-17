@@ -7,10 +7,10 @@ west is a reverse proxy written by Python.
 west accepts a request from a client,
 and transports the request to the other specified west.
 The specified west receiving the request acts as a proxy as well,
-and send the request to the server,
+and sends the request to the server,
 returns the response to the source west.
 The source west returns the response to the client.
-west currently only support HTTP proxy.
+west currently only supports HTTP proxy.
 
 The point is that west utilizes WebSocket tunnel to transport the requests
 between wests.
