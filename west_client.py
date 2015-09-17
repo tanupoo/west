@@ -51,7 +51,7 @@ class west_client():
                 print('DEBUG: ---END---')
         reqmsg = west_parser(msg)
         if not reqmsg:
-            raise ValueError
+            raise
         #
         t_origin = reqmsg['wh'].get('TransactionOrigin')
         if not t_origin:
