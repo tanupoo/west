@@ -26,12 +26,11 @@ def west_parser(message):
             }
 
     if not message:
-        return None
+        raise ValueError('ERROR: no message is passed.')
     # parse the west header
     wst_header, sep, http_message = message.partition('\r\n\r\n')
     if sep != '\r\n\r\n':
-        print('ERROR: there is no double CR+LF for the end of wst header.')
-        return None
+        raise ValueError('ERROR: there is no double CR+LF for the end of wst header.')
     for m in wst_header.split('\r\n'):
         key, val = m.split(':', 1)
         key = key.strip()
@@ -42,16 +41,14 @@ def west_parser(message):
     # parse the http header
     http_headers, sep, wst_msg['hc'] = http_message.partition('\r\n\r\n')
     if sep != '\r\n\r\n':
-        print('ERROR: there is no double CR+LF for the end of http header.')
-        return None
+        raise ValueError('ERROR: there is no double CR+LF for the end of http header.')
     http_1stline, sep, http_headers = http_headers.partition('\r\n')
     #
     # don't check whether sep is equal to '\r\n' because there is a case
     # when the peer doesn't send other http headers nor any content.
     #
     #if sep != '\r\n':
-    #    print('ERROR: there is no CR+LF for the end of http first line.')
-    #    return None
+    #    raise ValueError('ERROR: there is no CR+LF for the end of http first line.')
     wst_msg['hr'] = http_1stline.split(' ', 2)
     ret = re_http_response.match(wst_msg['hr'][0])
     if ret:
@@ -63,14 +60,13 @@ def west_parser(message):
             # http request
             pass
         else:
-            print('ERROR: invalid HTTP first line [%s]' % wst_msg['hr'])
-            return None
+            raise ValueError('ERROR: invalid HTTP first line [%s]' % wst_msg['hr'])
     # XXX need more check about the commands
     for h in http_headers.split('\r\n'):
         if not h:
             continue
         key, val = h.split(':', 1)
-        key = key.strip()
+        key = key.strip().lower()
         val = val.strip()
         wst_msg['hh'].update({ key : val })
     return wst_msg
