@@ -30,6 +30,8 @@ def inet_string(s, lookup=False):
               'host' : '',
               'port' : ''
     }
+    if len(s) == 0:
+        return ret
     if s[0] == '/':
         ret['url_path'] = s
         return ret
