@@ -100,7 +100,7 @@ for example, if the control port is 127.0.0.1:9701, just type below command.
 
 ## TODO
 
-- reviewing error codes.
+- pong by the west server.
 - access control for the connection from the other *west*.
 - access control from an HTTP client.
 - SSL in WebSocket.
