@@ -26,11 +26,11 @@ def west_parser(message):
             }
 
     if not message:
-        raise ValueError('ERROR: no message is passed.')
+        raise ValueError('no message is passed.')
     # parse the west header
     wst_header, sep, http_message = message.partition('\r\n\r\n')
     if sep != '\r\n\r\n':
-        raise ValueError('ERROR: there is no double CR+LF for the end of wst header.')
+        raise ValueError('there is no double CR+LF for the end of wst header.')
     for m in wst_header.split('\r\n'):
         key, val = m.split(':', 1)
         key = key.strip()
@@ -41,7 +41,7 @@ def west_parser(message):
     # parse the http header
     http_headers, sep, wst_msg['hc'] = http_message.partition('\r\n\r\n')
     if sep != '\r\n\r\n':
-        raise ValueError('ERROR: there is no double CR+LF for the end of http header.')
+        raise ValueError('there is no double CR+LF for the end of http header.')
     http_1stline, sep, http_headers = http_headers.partition('\r\n')
     #
     # don't check whether sep is equal to '\r\n' because there is a case
@@ -60,7 +60,7 @@ def west_parser(message):
             # http request
             pass
         else:
-            raise ValueError('ERROR: invalid HTTP first line [%s]' % wst_msg['hr'])
+            raise ValueError('invalid HTTP first line [%s]' % wst_msg['hr'])
     # XXX need more check about the commands
     for h in http_headers.split('\r\n'):
         if not h:
